@@ -160,7 +160,14 @@ class PatientSerialView(serializers.ModelSerializer):
     class Meta:
         model=Patients
         fields=['id','name','email','phone','dtr_id','desc','date']
-
+class PatientPastSerialView(serializers.ModelSerializer):
+    name=serializers.CharField(max_length=250)
+    date=serializers.DateField()
+    desc=serializers.CharField(max_length=2000)
+    
+    class Meta:
+        model=PastPatient
+        fields=['name','email','phone','dtr_id','desc','date']
 class PatientAppointmentSerial(serializers.ModelSerializer):
     email=serializers.EmailField(max_length=255)
     

@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework import status
 from .models import PastPatient, Quizzes,Question,Patients,Doctor1
-from .serializers import PastPatientDetailSerial, PatientPastDetailSerial, UserRegisterationSerial, UserLoginSerial, UserProfileSerial, ChangePasswordSeial, SendPasswordResetMailSerial,UserPasswordResetSerial, ContactSerial,QuestionSerial,RandomQuestionSerial,QuizSerial,PatientAppointmentSerial,DoctorSerial,PatientSerialView
+from .serializers import PastPatientDetailSerial, PatientPastDetailSerial, PatientPastSerialView, UserRegisterationSerial, UserLoginSerial, UserProfileSerial, ChangePasswordSeial, SendPasswordResetMailSerial,UserPasswordResetSerial, ContactSerial,QuestionSerial,RandomQuestionSerial,QuizSerial,PatientAppointmentSerial,DoctorSerial,PatientSerialView
 from rest_framework.generics import ListAPIView
 from .renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -135,11 +135,13 @@ class PatientView(APIView):
         
         time=random.randint(8,20)
         serializer=PatientSerialView(instance=task,data=request.data)
-        
-        if serializer.is_valid(raise_exception=True):
+        serializer1=PatientPastSerialView(instance=task,data=request.data)
+        if serializer.is_valid(raise_exception=True) and serializer1.is_valid(raise_exception=True):
             date=serializer.validated_data.get('date')
             name=serializer.validated_data.get('name')
             desc=serializer.validated_data.get('desc')
+            serializer1.save()
+            
             if time<=11:
                 body=f'Your Appointment is done for the {date} at {time}am for the {desc},  Regards team MFW.'
                 datas={'subject':f'Appointment is successful for the patient','body':body,'to_email':email}
@@ -148,7 +150,9 @@ class PatientView(APIView):
                 body=f'Your Appointment is done for the {date} at {time}pm for the {desc}, Regards team MFW.'
                 datas={'subject':f'Appointment is successful for the patient {name}','body':body,'to_email':email}
                 Util.sendEmail(datas)
+            
             serializer.save()
+            
             
            
             return Response(serializer.data)
