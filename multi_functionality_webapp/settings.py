@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
 ]
 CSRF_TRUSTED_ORIGINS = [
-    "*"
+    'https://multifunctionwebappapi.herokuapp.com/'
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
