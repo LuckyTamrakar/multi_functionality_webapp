@@ -1,1 +1,1 @@
-web: waitress-serve --port=$PORT multi_functionality_webapp.wsgi:application
+web: waitress-serve --port=8000 multi_functionality_webapp.wsgi:application
