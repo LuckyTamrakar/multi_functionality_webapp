@@ -8,8 +8,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework import status
-from .models import PastPatient, Quizzes,Question,Patients,Doctor1
-from .serializers import PastPatientDetailSerial, PatientPastDetailSerial, PatientPastSerialView, UserRegisterationSerial, UserLoginSerial, UserProfileSerial, ChangePasswordSeial, SendPasswordResetMailSerial,UserPasswordResetSerial, ContactSerial,QuestionSerial,RandomQuestionSerial,QuizSerial,PatientAppointmentSerial,DoctorSerial,PatientSerialView
+from .models import MyUser, PastPatient, Quizzes,Question,Patients,Doctor1
+from .serializers import PastPatientDetailSerial, PatientPastDetailSerial, PatientPastSerialView, UserRegisterationSerial, UserLoginSerial, UserProfileSerial, ChangePasswordSeial, SendPasswordResetMailSerial,UserPasswordResetSerial, ContactSerial,QuestionSerial,RandomQuestionSerial,QuizSerial,PatientAppointmentSerial,DoctorSerial,PatientSerialView, VerifyEmailOtp
 from rest_framework.generics import ListAPIView
 from .renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -30,6 +30,8 @@ def get_tokens_for_user(user):
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
+
+        
 class UserRegistration(APIView):
     renderer_classes=[UserRenderer]
     def post(self,request,format=None):
@@ -53,14 +55,24 @@ class UserLogin(APIView):
             email=serializer.data.get('email')
             password = serializer.data.get('password')
             user=authenticate(email=email,password=password)
+
             if user is not None:
+                x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+                if x_forwarded_for:
+                    
+                    ip = x_forwarded_for.split(',')[0]
+                    print(ip)
+                else:
+                    ip = request.META.get('REMOTE_ADDR')
+                    print(ip)
+
                 token=get_tokens_for_user(user)
-                body='Account Login Successfully, Team MFW'
+                body=f'Account Login Successfully  and visiting IP address is {ip}, Team MFW '
                 data={'subject':'Account Login successfully, Team MFW','body':body,'to_email':email}
                 Util.sendEmail(data)
                 return Response({'token':token,'msg':'Login Success'}, status=status.HTTP_200_OK)
             else:
-                return Response({'errors':{'Non_field_errors' : ['Email or Password is not valid']}}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'errors':{'Non_field_errors' : ['Email or Password is not valid or your account is not verify']}}, status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 class UserProfile(APIView):
@@ -135,11 +147,14 @@ class PatientView(APIView):
         
         time=random.randint(8,20)
         serializer=PatientSerialView(instance=task,data=request.data)
+        
         serializer1=PatientPastSerialView(instance=task,data=request.data)
         if serializer.is_valid(raise_exception=True) and serializer1.is_valid(raise_exception=True):
             date=serializer.validated_data.get('date')
             name=serializer.validated_data.get('name')
             desc=serializer.validated_data.get('desc')
+            task.time=time
+            task.save()
             serializer1.save()
             
             if time<=11:
@@ -179,3 +194,29 @@ class PastPatientDetail(APIView):
         data=PastPatient.objects.filter(email=kwargs['email'])
         serializer=PastPatientDetailSerial(data,many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+class VerifyOtpView(APIView):
+    def post(self,request,format=None):
+        serializerl=VerifyEmailOtp(data=request.data)
+        
+        if serializerl.is_valid(raise_exception=True):
+            email=serializerl.data.get('email')
+            otp=serializerl.data.get('otp')
+           
+            if MyUser.objects.filter(email=email).exists():
+                user=MyUser.objects.get(email=email)
+                u_otp=user.otp
+                
+                if int(u_otp)==int(otp):
+                    user.is_active=True
+                    
+                    body='Account has been activated Successfully Team MFW'
+                    data={'subject':f'Account activation successfully via MFW','body':body,'to_email':email}
+                    Util.sendEmail(data)
+                    user.save()
+                   
+                    return Response("Verification successfully", status=status.HTTP_200_OK)
+                else:
+                    return Response("Invalid Otp",status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response("Email not exists",status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializerl.errors,status=status.HTTP_400_BAD_REQUEST)

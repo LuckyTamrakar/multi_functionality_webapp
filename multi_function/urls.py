@@ -6,6 +6,7 @@ from multi_function import views
 urlpatterns = [
     path('', views.home),
     path('register/', views.UserRegistration.as_view()),
+    
     path('login/', views.UserLogin.as_view()),
     path('user/', views.UserProfile.as_view()),
     path('changePassword/', views.ChangePassword.as_view()),
@@ -19,4 +20,5 @@ urlpatterns = [
     path('patients-available/<str:email>', views.PatientView.as_view()),
     path('patients-past/<str:email>', views.PastPatientDetail.as_view()),
     path('patients-appointment/', views.PatientAppointment.as_view()),
+    path('otp/',views.VerifyOtpView.as_view()),
 ]

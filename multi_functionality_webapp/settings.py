@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
-
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -87,7 +87,7 @@ WSGI_APPLICATION = 'multi_functionality_webapp.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3'
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 
@@ -151,7 +151,9 @@ EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = "multifunctionalitywebapp@gmail.com"
-EMAIL_HOST_PASSWORD = 'ldjuffvaggdirioy'
+EMAIL_HOST_PASSWORD = 'lbrmjxltfadrizrx'
+#EMAIL_HOST_USER = 'wecareclinic.02@gmail.com'
+#EMAIL_HOST_PASSWORD = 'bshnkdvnatzmnpwf'
 DEFAULT_FROM_EMAIL = "multifunctionalitywebapp@gmail.com"
 
 

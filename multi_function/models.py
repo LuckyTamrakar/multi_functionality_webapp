@@ -1,3 +1,4 @@
+from email.policy import default
 from unittest.util import _MAX_LENGTH
 from django.db import models
 from django.contrib.auth.models import (
@@ -14,9 +15,7 @@ class Users(models.Model):
     email = models.CharField(max_length=100)
 class MyUserManager(BaseUserManager):
     def create_user(self, email, name, tc,phone, password=None, password2=None):
-        """
-        Creates and saves a User with the given email, name, tc and password.
-        """
+        
         if not email:
             raise ValueError('Users must have an email address')
 
@@ -31,9 +30,7 @@ class MyUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
     def create_superuser(self, email,phone, name,tc, password=None):
-        """
-        Creates and saves a superuser with the given email, name,tc and password.
-        """
+        
         user = self.create_user(
             email,
             password=password,
@@ -53,8 +50,9 @@ class MyUser(AbstractBaseUser):
     name=models.CharField(max_length=200)
     phone=models.CharField(max_length=20,unique=True,default="")
     tc=models.BooleanField()
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
+    otp=models.CharField(max_length=10,default='')
     created_at=models.DateTimeField(auto_now_add=True)
     doctordiag=models.CharField(max_length=200,blank=True)
     updated_at=models.DateTimeField(auto_now_add=True)

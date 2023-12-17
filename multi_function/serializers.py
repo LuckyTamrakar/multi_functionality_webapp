@@ -14,17 +14,19 @@ from .utils import Util
     class Meta:
         model = Users
         fields = ['id','stuname','email']'''
+
 class UserRegisterationSerial(serializers.ModelSerializer):
-    password2=serializers.CharField(style={'input_type':'password'},write_only=True)
+    #password2=serializers.CharField(style={'input_type':'password'},write_only=True)
     class Meta:
         model=MyUser
-        fields=['email','name','phone','password','password2','tc']
+        fields=['email','name','phone','password','tc']
         extra_kwargs={
             'password':{'write_only':True}
         }
+    
     def validate(self,attrs):
         password=attrs.get('password')
-        password2=attrs.get('password2')
+        #password2=attrs.get('password2')
         email=attrs.get('email')
         
         phone=attrs.get('phone')
@@ -33,21 +35,29 @@ class UserRegisterationSerial(serializers.ModelSerializer):
         if len(password) <= 10:
             if not any(char.isdigit() for char in password):
                 raise serializers.ValidationError("Password have one digit")
-
+        
     # check for letter
             if not any(char.isalpha() for char in password):
                 raise serializers.ValidationError("Password have one alphabet")
             raise serializers.ValidationError("Minimum password have 10 length")
-        if password!=password2:
-            raise serializers.ValidationError("password and Confirm password Does not match")
-        body='Account has been created Successfully Team MFW'
-        data={'subject':'Account creation successfully via MFW','body':body,'to_email':email}
-        Util.sendEmail(data)
+        
+       
         
         return attrs
-    def create(self,validate_data):
+    def create(self,validated_data):
+        user = super(UserRegisterationSerial, self).create(validated_data)
+        user.set_password(validated_data['password'])
+
         
-        return MyUser.objects.create_user(**validate_data)
+        email=user.email
+        otp = random.randint(10000,99999)
+        user.otp = otp
+        body='Account has been created Successfully please verify http://localhost:3000/otp Team MFW'
+        data={'subject':f'Account creation successfully via MFW Your Otp is {otp}','body':body,'to_email':email}
+        Util.sendEmail(data)
+        
+        user.save()
+        return user
 class ContactSerial(serializers.ModelSerializer):
     class Meta:
         model=Contact
@@ -159,7 +169,7 @@ class PatientSerialView(serializers.ModelSerializer):
     
     class Meta:
         model=Patients
-        fields=['id','name','email','phone','dtr_id','desc','date']
+        fields=['id','name','email','phone','dtr_id','desc','date','time']
 class PatientPastSerialView(serializers.ModelSerializer):
     name=serializers.CharField(max_length=250)
     date=serializers.DateField()
@@ -194,23 +204,32 @@ class PatientAppointmentSerial(serializers.ModelSerializer):
             raise serializers.ValidationError('One time only one patients can be appointed with one email id')
                 
         elif MyUser.objects.filter(email=email).exists():
-            user=MyUser.objects.get(email=email)
-            if time<=11:
-                body=f'Your Appointment is done for the {date} at {time}am of {doctor} for the {desc}, Regards team MFW.'
-                data={'subject':f'Appointment is successful for the patient {name}','body':body,'to_email':user.email}
-                Util.sendEmail(data)
-                
-            else:
-                body=f'Your Appointment is done for the {date} at {time}pm of {doctor} for the {desc}, Regards team MFW.'
-                data={'subject':f'Appointment is successful for the patient {name}','body':body,'to_email':user.email}
-                Util.sendEmail(data)
+            
                 
             
             return attrs
         else:
             raise serializers.ValidationError('You are not registered User')
-    
-
+    def create(self,validated_data):
+        user = super(PatientAppointmentSerial, self).create(validated_data)
+        time=random.randint(8, 20)
+        
+        name=user.name
+        date=user.date
+        doctor=user.dtr_id
+        desc=user.desc
+        if time<=11:
+                body=f'Your Appointment is done for the {date} at {time}am of {doctor} for the {desc}, Regards team MFW.'
+                data={'subject':f'Appointment is successful for the patient {name}','body':body,'to_email':user.email}
+                Util.sendEmail(data)
+                
+        else:
+                body=f'Your Appointment is done for the {date} at {time}pm of {doctor} for the {desc}, Regards team MFW.'
+                data={'subject':f'Appointment is successful for the patient {name}','body':body,'to_email':user.email}
+                Util.sendEmail(data)
+        user.time=time
+        user.save()
+        return user
 class PatientPastDetailSerial(serializers.ModelSerializer):
     email=serializers.EmailField(max_length=255)
     class Meta:
@@ -223,4 +242,9 @@ class PastPatientDetailSerial(serializers.ModelSerializer):
         model=PastPatient
         fields=['names','doctor','doctordiag','email']
 
-    
+class VerifyEmailOtp(serializers.ModelSerializer):
+    class Meta:
+        model=MyUser
+        fields=['email','otp']
+    email=serializers.EmailField(max_length=255)   
+    otp=serializers.CharField(max_length=10)
