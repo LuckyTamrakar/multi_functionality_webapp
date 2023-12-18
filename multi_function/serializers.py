@@ -52,7 +52,7 @@ class UserRegisterationSerial(serializers.ModelSerializer):
         email=user.email
         otp = random.randint(10000,99999)
         user.otp = otp
-        body='Account has been created Successfully please verify http://localhost:3000/otp Team MFW'
+        body='Account has been created Successfully please verify https://mfw.onrender.com/otp Team MFW'
         data={'subject':f'Account creation successfully via MFW Your Otp is {otp}','body':body,'to_email':email}
         Util.sendEmail(data)
         
@@ -98,7 +98,7 @@ class SendPasswordResetMailSerial(serializers.Serializer):
             user=MyUser.objects.get(email=email)
             uid=urlsafe_base64_encode(force_bytes(user.id))
             token=PasswordResetTokenGenerator().make_token(user)
-            link='http://localhost:3000/reset-password/'+uid+'/'+token
+            link='https://mfw.onrender.com/reset-password/'+uid+'/'+token
             print(link)
             body='Click Following Link to reset Password : '+link
             data={'subject':'Reset Password Link via MFW','body':body,'to_email':user.email}
